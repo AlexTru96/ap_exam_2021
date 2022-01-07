@@ -88,10 +88,10 @@ class list_pool{
   	 return const_iterator{end(),&pool};} 
   
   const_iterator cbegin(list_type x) const{
-	  return const_iterator{x,&pool};}
+	  return (*this).begin(x);}
 
   const_iterator cend(list_type ) const{
-  	  return const_iterator{end(),&pool};}
+  	  return (*this).end();}
     
   list_type new_list() noexcept {
 	return end();	 
@@ -101,25 +101,25 @@ class list_pool{
 	  pool.reserve(n);  
   }; // reserve n nodes in the pool
 
-  size_type capacity() const{
+  size_type capacity() const noexcept{
 		return  pool.capacity();
   } // the capacity of the pool
   
-  list_type _size() const{
+  list_type _size() const noexcept{
   		return pool.size();}
 
   bool is_empty(list_type x) const noexcept {return x==end();}
 
   list_type end() const noexcept { return list_type(0); }
   
-  T& value(list_type x){
+  T& value(list_type x) noexcept{
 	return node(x).value;
   }
-  const T& value(list_type x) const {
+  const T& value(list_type x) const noexcept{
 	return node(x).value;
   }
 
-  list_type& next(list_type x){
+  list_type& next(list_type x) {
 	return node(x).next;
   }
   const list_type& next(list_type x) const{
@@ -133,8 +133,7 @@ class list_pool{
 	free_node_list=node(aux).next;
 	node(aux).next=index;
 	return aux;
-  }
-
+  } // helpful function which uses one node from free_node_list, setting the user value and the next index, returns the index of the used node.
 
   list_type push_front(const T& val, list_type head){
 	  if(free_node_list){
@@ -146,9 +145,9 @@ class list_pool{
 	  }
 	  return head;
 
-  }
+  } // Push front method for lhs values, returns the modified head of the list. This function could acquire resources by using emplace back so noexcept is not recommended.
 
-  list_type push_front(T&& val, list_type head) noexcept {
+  list_type push_front(T&& val, list_type head) {
 	  if(free_node_list){
 		head = using_free_node(std::move(val), head);
 		}
@@ -157,21 +156,21 @@ class list_pool{
 	  	head=_size();
 	  }
 	  return head;
-  }
+  } // Push front method for rhs values, returns the modified head of the list 
 
   list_type last_node(list_type tmp) noexcept {
   	if(tmp){
     	    while (node(tmp).next){tmp = node(tmp).next;}}
-  	return tmp;}
+  	return tmp;} 
+  // returns the index of the last node in the actual list
 
 
-  list_type check_last_node(list_type head, list_type last){
+  list_type check_last_node(list_type head, list_type last) noexcept{
 	if(head){
 		node(last_node(head)).next = last;
 		return head;}
 	else{return last;}
-
-  }
+  } // helpful function to concatenate the last node to the list when using push_back methods
 
   list_type push_back(const T& val, list_type head){
 	  if(free_node_list){
@@ -183,7 +182,7 @@ class list_pool{
 		pool.emplace_back(val,end());
 		return check_last_node(head, _size());
 	 }	
-  }
+  } // Push back method for lhs values, returns the actual head of the list
 
   list_type push_back(T&& val, list_type head){
 	  if(free_node_list){
@@ -195,10 +194,9 @@ class list_pool{
 		pool.emplace_back(std::move(val),end());
 		return check_last_node(head, _size());
 	 }		 
-
-  }
+  } // Push back method for rhs values, returns the actual head of the list
   
-  list_type free(list_type x){
+  list_type free(list_type x) noexcept{
 	if(x){
 		auto tmp =node(x).next;
 		node(x).next=free_node_list;
@@ -206,12 +204,12 @@ class list_pool{
 	 	return tmp;}
 	else{
       		return end();}	       
-  } // delete first node
+  } // delete first node concatenates with the currente free list and returns the next in the actual list
 
-  list_type free_list(list_type x){
+  list_type free_list(list_type x) noexcept{
 	if(free_node_list){
 		node(last_node(free_node_list)).next=x;}
 	else{free_node_list=x;}
 	return end();
-  } // free entire list
+  } // free entire list, concatenates with the current free list and returns 0
 };
