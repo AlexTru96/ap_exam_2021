@@ -5,13 +5,12 @@
 SCENARIO("a size check"){
   list_pool<int, std::size_t> pool{4};
   auto l1 = pool.new_list();
-  l1 = pool.push_front(42,l1);
-  l1 = pool.push_front(84,l1);
-  l1 = pool.push_front(420,l1);
+  l1 = pool.push_front(1,l1);
+  l1 = pool.push_front(2,l1);
   auto l2 = pool.new_list();
-  l2 = pool.push_back(100,l2);
-  l2 = pool.push_back(23,l2);
-  REQUIRE( pool._size()==5);
+  l2 = pool.push_back(3,l2);
+  l2 = pool.push_back(4,l2);
+  REQUIRE( pool._size()==4);
 }
 
 SCENARIO("checking merge list function"){
@@ -56,5 +55,21 @@ SCENARIO("checking heads for the free node list"){
     head_free_nl = pool.show_free_list();
     REQUIRE(head_free_nl==1);
     REQUIRE(pool.value(l1) == 4);
+   }
+}
+
+
+SCENARIO("moving pools"){
+  GIVEN("a list_pool class, we will use move constructor") {
+    list_pool<int, uint16_t> pool_moved{};
+    auto l1 = pool_moved.new_list();
+    l1 = pool_moved.push_front(3, l1);
+    l1 = pool_moved.push_front(2, l1);
+    l1 = pool_moved.push_front(1, l1);
+    list_pool<int, uint16_t> pool_new{std::move(pool_moved)};
+    REQUIRE(pool_new._size()==3);
+    REQUIRE(pool_new.value(l1)==1);
+    REQUIRE(pool_moved._size() == 0);
+
    }
 }

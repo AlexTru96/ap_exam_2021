@@ -30,11 +30,11 @@ class _iterator {
     	return tmp;
  	}
 
-  friend bool operator==(const _iterator& x, const _iterator& y) noexcept {
+  friend bool operator==(const _iterator& x, const _iterator& y) {
     return (*x.pool)[x.current-1].value == (*y.pool)[y.current-1].value;
   } // if the values are equal we considered both equal
 
-  friend bool operator!=(const _iterator& x, const _iterator& y) noexcept {
+  friend bool operator!=(const _iterator& x, const _iterator& y) {
     return !(x == y);
   }
 };
@@ -61,7 +61,7 @@ class list_pool{
   using list_type = N;
   using value_type = T;
   using size_type = typename std::vector<node_t>::size_type;
-  list_type free_node_list = list_type(0); // at the beginning, it is empty
+  list_type free_node_list {end()}; // at the beginning, it is empty
   
   node_t& node(list_type x) noexcept { return pool[x-1]; } // given an index it will return the node associated in the vector of nodes.
   const node_t& node(list_type x) const noexcept { return pool[x-1]; }
@@ -128,14 +128,15 @@ class list_pool{
   }
  
   template<typename X>
-  list_type using_free_node(X&& val,list_type index) noexcept{ 
+  list_type using_free_node(X&& val,list_type index) { 
 	auto aux = free_node_list;
 	node(free_node_list).value=std::forward<X>(val);
 	free_node_list=node(aux).next;
 	node(aux).next=index;
 	return aux;
   } // helpful function which uses one node from free_node_list, setting the user value and the next index, returns the index of the used node.
-
+  
+  // luckily std::vector<node_t> will take care of the capacity :D
   list_type push_front(const T& val, list_type head){
 	  if(free_node_list){
 		head= using_free_node(val, head);
@@ -214,7 +215,7 @@ class list_pool{
   } // free entire list, concatenates with the current free list and returns 0
   const list_type show_free_list() const noexcept{
   	return free_node_list;} // returns the head of the free node list
-  list_type merge_list(list_type& l1, list_type& l2){
+  list_type merge_list(list_type& l1, list_type& l2) noexcept{
 	node(last_node(l1)).next = l2;
 	l2 = end();
   	return l1;} // merges list l1 and l2, the head will be l1's head
