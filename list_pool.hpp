@@ -4,6 +4,8 @@
 #include <iostream>
 #include <utility>
 
+//ITERATOR CLASS: useful method to traverse a blazingly fast list_pool
+
 template <typename I, typename X, typename T>
 class _iterator {
   I current;
@@ -39,7 +41,7 @@ class _iterator {
   }
 };
 
-
+// LIST POOL CLASS: The heart of the code
 
 template <typename T, typename N = std::size_t>
 class list_pool{
