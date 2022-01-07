@@ -12,28 +12,29 @@ class _iterator {
   using value_type = T;
   using reference = value_type&;
 
-  _iterator(I x, X pool_x) : current{x}, pool{pool_x}{}
+  _iterator(I x, X pool_x) noexcept : current{x}, pool{pool_x}{}
+  // constructor used by methods of the list_pool class
 
-  reference operator*() const {
+  reference operator*() const noexcept{
 	return (*pool)[current-1].value;
-  	}
+  	} //access to the value of the current node 
 
-  _iterator& operator++() {  // pre-increment
+  _iterator& operator++() noexcept {  // pre-increment
   	current = (*pool)[current-1].next;
     	return *this;
 	}
 
-  _iterator operator++(int) {  // post-increment
+  _iterator operator++(int) noexcept{  // post-increment
         auto tmp = *this;
         ++(*this); 
     	return tmp;
  	}
 
-  friend bool operator==(const _iterator& x, const _iterator& y) {
+  friend bool operator==(const _iterator& x, const _iterator& y) noexcept {
     return (*x.pool)[x.current-1].value == (*y.pool)[y.current-1].value;
-  }
+  } // if the values are equal we considered both equal
 
-  friend bool operator!=(const _iterator& x, const _iterator& y) {
+  friend bool operator!=(const _iterator& x, const _iterator& y) noexcept {
     return !(x == y);
   }
 };
@@ -48,11 +49,11 @@ class list_pool{
     N next;
 
     node_t(const T& x, N p) noexcept
-        : value{x},  // copy ctor
+        : value{x},  // copy constructor, noexcept allowed, just two integers
           next{p} {}
 
     node_t(T&& x, N p) noexcept
-        : value{std::move(x)},  // move ctor
+        : value{std::move(x)},  // move constructor
           next{p} {} 
   };
 
@@ -62,7 +63,7 @@ class list_pool{
   using size_type = typename std::vector<node_t>::size_type;
   list_type free_node_list = list_type(0); // at the beginning, it is empty
   
-  node_t& node(list_type x) noexcept { return pool[x-1]; }
+  node_t& node(list_type x) noexcept { return pool[x-1]; } // given an index it will return the node associated in the vector of nodes.
   const node_t& node(list_type x) const noexcept { return pool[x-1]; }
 
   public:
@@ -71,26 +72,26 @@ class list_pool{
 
   explicit list_pool(size_type n){
 	pool.reserve(n);
-  } // reserve n nodes in the pool
+  } // reserve n nodes in the pool,constructor that acquires resources (noexcept not recommended)
     
   using iterator = _iterator<list_type,std::vector<node_t>*, T>;
   using const_iterator = _iterator<list_type,std::vector<node_t>*, const T>;
-  iterator begin(list_type x) { 
+  iterator begin(list_type x) noexcept { 
 	  return iterator{x,&pool};}
 
-  iterator end(list_type ){ 
+  iterator end(list_type ) noexcept{ 
 	return iterator{end(),&pool};} // this is not a typo
     
-  const_iterator begin(list_type x) const{
+  const_iterator begin(list_type x) const noexcept{
 	 return const_iterator{x,&pool};}
 
-  const_iterator end(list_type ) const{
+  const_iterator end(list_type ) const noexcept{
   	 return const_iterator{end(),&pool};} 
   
-  const_iterator cbegin(list_type x) const{
+  const_iterator cbegin(list_type x) const noexcept{
 	  return (*this).begin(x);}
 
-  const_iterator cend(list_type ) const{
+  const_iterator cend(list_type ) const noexcept{
   	  return (*this).end();}
     
   list_type new_list() noexcept {
@@ -99,7 +100,7 @@ class list_pool{
 
   void reserve(size_type n){
 	  pool.reserve(n);  
-  }; // reserve n nodes in the pool
+  }; // reserve n nodes in the pool, acquires resources
 
   size_type capacity() const noexcept{
 		return  pool.capacity();
@@ -119,15 +120,15 @@ class list_pool{
 	return node(x).value;
   }
 
-  list_type& next(list_type x) {
+  list_type& next(list_type x) noexcept {
 	return node(x).next;
   }
-  const list_type& next(list_type x) const{
+  const list_type& next(list_type x) const noexcept{
 	return node(x).next;
   }
  
   template<typename X>
-  list_type using_free_node(X&& val,list_type index){ 
+  list_type using_free_node(X&& val,list_type index) noexcept{ 
 	auto aux = free_node_list;
 	node(free_node_list).value=std::forward<X>(val);
 	free_node_list=node(aux).next;
@@ -156,14 +157,13 @@ class list_pool{
 	  	head=_size();
 	  }
 	  return head;
-  } // Push front method for rhs values, returns the modified head of the list 
+  } // Push front method for rhs values, returns the modified head of the list (noexcept not recommended) 
 
   list_type last_node(list_type tmp) noexcept {
   	if(tmp){
     	    while (node(tmp).next){tmp = node(tmp).next;}}
   	return tmp;} 
-  // returns the index of the last node in the actual list
-
+  // returns the index of the last node in the actual list 
 
   list_type check_last_node(list_type head, list_type last) noexcept{
 	if(head){
@@ -182,7 +182,7 @@ class list_pool{
 		pool.emplace_back(val,end());
 		return check_last_node(head, _size());
 	 }	
-  } // Push back method for lhs values, returns the actual head of the list
+  } // Push back method for lhs values, returns the actual head of the list (noexcept not recommended)
 
   list_type push_back(T&& val, list_type head){
 	  if(free_node_list){
@@ -194,9 +194,9 @@ class list_pool{
 		pool.emplace_back(std::move(val),end());
 		return check_last_node(head, _size());
 	 }		 
-  } // Push back method for rhs values, returns the actual head of the list
+  } // Push back method for rhs values, returns the actual head of the list (noexcept not recommended)
   
-  list_type free(list_type x) noexcept{
+  list_type free(list_type x) noexcept {
 	if(x){
 		auto tmp =node(x).next;
 		node(x).next=free_node_list;
@@ -204,7 +204,7 @@ class list_pool{
 	 	return tmp;}
 	else{
       		return end();}	       
-  } // delete first node concatenates with the currente free list and returns the next in the actual list
+  } // delete first node concatenates with the current free list and returns the next in the actual list
 
   list_type free_list(list_type x) noexcept{
 	if(free_node_list){
@@ -212,4 +212,10 @@ class list_pool{
 	else{free_node_list=x;}
 	return end();
   } // free entire list, concatenates with the current free list and returns 0
+  const list_type show_free_list() const noexcept{
+  	return free_node_list;} // returns the head of the free node list
+  list_type merge_list(list_type& l1, list_type& l2){
+	node(last_node(l1)).next = l2;
+	l2 = end();
+  	return l1;} // merges list l1 and l2, the head will be l1's head
 };
