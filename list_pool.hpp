@@ -105,7 +105,7 @@ class list_pool{
 	  return (*this).begin(x);}
 
   const_iterator cend(list_type ) const noexcept{
-  	  return (*this).end();}
+  	  return (*this).end(list_type(0));}
     
   list_type new_list() noexcept {
 	return end();	 
