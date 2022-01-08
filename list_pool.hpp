@@ -140,38 +140,34 @@ class list_pool{
 	return node(x).next;
   }
  
-  template<typename X>
-  list_type using_free_node(X&& val,list_type index) { 
+  list_type using_free_node(T&& val,list_type index) { 
 	auto aux = free_node_list;
-	node(free_node_list).value=std::forward<X>(val);
+	node(free_node_list).value=std::forward<T>(val);
 	free_node_list=node(aux).next;
 	node(aux).next=index;
 	return aux;
   } // helpful function which uses one node from free_node_list, setting the user value and the next index, returns the index of the used node.
   
   // luckily std::vector<node_t> will take care of the capacity :D
-  list_type push_front(const T& val, list_type head){
-	  if(free_node_list){
-		head= using_free_node(val, head);
+  //
+  list_type _push_front(T&& val, list_type head){
+	if(free_node_list){
+		head= using_free_node(std::forward<T>(val), head);
 		}
-	  else{
-	  	pool.emplace_back(val,head);
+	else{
+	  	pool.emplace_back(std::forward<T>(val),head);
 	  	head=_size();
-	  }
-	  return head;
+	}
+	return head;
+  }// returns the modified head of the list. This function could acquire resources by using emplace back so noexcept is not recommended.
 
-  } // Push front method for lhs values, returns the modified head of the list. This function could acquire resources by using emplace back so noexcept is not recommended.
+  list_type push_front(const T& val, list_type head){
+	return _push_front(val,head);
+  } // Push front method for lhs values
 
   list_type push_front(T&& val, list_type head) {
-	  if(free_node_list){
-		head = using_free_node(std::move(val), head);
-		}
-	  else{
-	  	pool.emplace_back(std::move(val),head);
-	  	head=_size();
-	  }
-	  return head;
-  } // Push front method for rhs values, returns the modified head of the list (noexcept not recommended) 
+	return _push_front(std::move(val),head);
+  } // Push front method for rhs values 
 
   list_type last_node(list_type tmp) noexcept {
   	if(tmp){
@@ -186,30 +182,25 @@ class list_pool{
 	else{return last;}
   } // helpful function to concatenate the last node to the list when using push_back methods
 
-  list_type push_back(const T& val, list_type head){
-	  if(free_node_list){
-		auto last = using_free_node(val,end());
+  list_type _push_back(T&& val, list_type head){
+	if(free_node_list){
+		auto last = using_free_node(std::forward<T>(val),end());
 		return check_last_node(head,last);
-	  }
-	
- 	 else{
-		pool.emplace_back(val,end());
+	}
+	else{
+		pool.emplace_back(std::forward<T>(val),end());
 		return check_last_node(head, _size());
-	 }	
-  } // Push back method for lhs values, returns the actual head of the list (noexcept not recommended)
+	}	
+  } // returns the original head of the list. This function could acquire resources by using emplace back so noexcept is not recommended.
+
+  list_type push_back(const T& val, list_type head){
+	return _push_back(val,head);
+  } // Push back method for lhs values
 
   list_type push_back(T&& val, list_type head){
-	  if(free_node_list){
-		auto last = using_free_node(std::move(val),end());
-		return check_last_node(head,last);
-	  }
-	
- 	 else{
-		pool.emplace_back(std::move(val),end());
-		return check_last_node(head, _size());
-	 }		 
-  } // Push back method for rhs values, returns the actual head of the list (noexcept not recommended)
-  
+	return _push_back(std::move(val),head); 
+  } // Push back method for rhs values  
+
   list_type free(list_type x) noexcept {
 	if(x){
 		auto tmp =node(x).next;
