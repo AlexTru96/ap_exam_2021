@@ -17,16 +17,16 @@ class _iterator {
   _iterator(I x, X pool_x) noexcept : current{x}, pool{pool_x}{}
   // constructor used by methods of the list_pool class
 
-  reference operator*() const noexcept{
+  reference operator*() const {
 	return (*pool)[current-1].value;
   	} //access to the value of the current node 
 
-  _iterator& operator++() noexcept {  // pre-increment
+  _iterator& operator++() {  // pre-increment
   	current = (*pool)[current-1].next;
     	return *this;
 	}
 
-  _iterator operator++(int) noexcept{  // post-increment
+  _iterator operator++(int) {  // post-increment
         auto tmp = *this;
         ++(*this); 
     	return tmp;
@@ -69,8 +69,19 @@ class list_pool{
   const node_t& node(list_type x) const noexcept { return pool[x-1]; }
 
   public:
-  list_pool() noexcept = default;
-  list_pool(list_pool&&) noexcept = default;
+  list_pool() noexcept = default; //default constructor
+  list_pool(list_pool&&) noexcept = default; //move constructor
+  list_pool& operator=(list_pool&&) = default; // move assignment
+
+  list_pool(const list_pool& that_list) noexcept {
+	pool = that_list.pool;
+  }  // copy constructor
+
+  list_pool& operator=(const list_pool& that_list) {
+  	pool.clear();
+	pool = that_list.pool;
+	return *this;	
+  } //copy assignment
 
   explicit list_pool(size_type n){
 	pool.reserve(n);
@@ -215,8 +226,10 @@ class list_pool{
 	else{free_node_list=x;}
 	return end();
   } // free entire list, concatenates with the current free list and returns 0
+
   const list_type show_free_list() const noexcept{
   	return free_node_list;} // returns the head of the free node list
+
   list_type merge_list(list_type& l1, list_type& l2) noexcept{
 	node(last_node(l1)).next = l2;
 	l2 = end();
